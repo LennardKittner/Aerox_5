@@ -55,10 +55,10 @@ fn main() {
             },
             Err(error) => {
                 handle_error(error, &mut device, &mut tray_handler);
-                thread::sleep(Duration::from_secs(5));
+                thread::sleep(Duration::from_secs(10));
                 continue;
             },
         };
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(10));
     }
 }

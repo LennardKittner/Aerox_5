@@ -1,7 +1,6 @@
 use hidapi::{HidApi, HidDevice, HidError};
 use thiserror::Error;
 
-
 // SteelSeries vendorID
 const VENDOR_IDS: [u16; 1] = [0x1038];
 // ProductIDs for:
@@ -22,13 +21,6 @@ const BATTERY_PACKET: [u8; 2] = {
     (packet[0], packet[1]) = (0x00, 0xD2);
     packet
 };
-
-struct MouseProperties {
-    battery_level_index: usize,
-    battery_level_preamble: [u8; 2],
-    battery_request_packet: [u8; 2],
-    battery_and_charging_decode: fn(u8) -> (u8, bool)
-}
 
 fn get_battery_state(byte: u8) -> (u8, bool) {
     let charging_flag: u8 = 0b10000000;
