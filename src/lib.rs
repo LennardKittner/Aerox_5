@@ -13,21 +13,15 @@ const PRODUCT_IDS: [u16; 6] = [0x1854, 0x185E, 0x1862, 0x1852, 0x185C, 0x1860];
 
 const INTERFACE_NUMBER: i32 = 3;
 
-//TODO: packets
 const BATTERY_LEVEL_INDEX: usize = 1;
-const BATTERY_LEVEL_PREAMBLE: [u8; 1] = [0xd2];
+const BATTERY_LEVEL_PREAMBLE: [u8; 1] = [0xD2];
+const MOUSE_OFF: [u8; 2] = [0x40, 0xFF];
 const RESPONSE_LENGTH: usize = 2;
 const BATTERY_PACKET: [u8; 2] = {
     let mut packet = [0; 2];
-    (packet[0], packet[1]) = (0x00, 0xd2);
+    (packet[0], packet[1]) = (0x00, 0xD2);
     packet
 };
-
-// const BATTERY_PACKET: [u8; 2] = {
-//     let mut packet = [0; 2];
-//     (packet[0], packet[1]) = (0x00, 0x92);
-//     packet
-// };
 
 struct MouseProperties {
     battery_level_index: usize,
@@ -47,8 +41,8 @@ pub enum DeviceError {
     HidError(#[from] HidError),
     #[error("No device found.")]
     NoDeviceFound(),
-    #[error("No response. Is the headset turned on?")]
-    HeadSetOff(),
+    #[error("Is the mouse turned on?")]
+    MouseOff(),
     #[error("No response.")]
     NoResponse(),
     #[error("Unknown response: {0:?} with length: {1}")]
@@ -82,17 +76,13 @@ impl Device {
         self.hid_device.write(&BATTERY_PACKET)?;
         let mut buf = [0u8; 8];
         let res = self.hid_device.read_timeout(&mut buf[..], 1000)?;
-        println!("{:?}", &buf[..res]);
         if res > RESPONSE_LENGTH && buf.starts_with(&BATTERY_LEVEL_PREAMBLE) {
             (self.battery_level, self.charging) = get_battery_state(buf[BATTERY_LEVEL_INDEX]);
+        } else if res > RESPONSE_LENGTH && buf.starts_with(&MOUSE_OFF) {
+            return Err(DeviceError::MouseOff());
         } else {
             return Err(DeviceError::UnknownResponse(buf, res));
         }
         Ok((self.battery_level, self.charging))
-    }
-
-    pub fn clear_state(&mut self) {
-        self.charging = false;
-        self.battery_level = 0;
     }
 }
