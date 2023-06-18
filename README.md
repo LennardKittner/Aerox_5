@@ -75,6 +75,8 @@ To build both applications on Linux, use:
 
 You can also download a compiled version from [releases](https://github.com/LennardKittner/Aerox_5/releases).
 
+`cargo build --release` **will fail on MacOS** because cargo will try to build the tray application, but some dependencies are exclusive to Linux.
+
 ## Usage
 `cli_app` without any arguments will print the current battery level and if the device is charging.
 
