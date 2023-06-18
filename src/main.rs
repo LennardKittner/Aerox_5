@@ -73,23 +73,42 @@ fn handle_error(error: DeviceError, device: &mut Device, tray_handler: &mut Tray
 }
 
 fn main() {
+    let args = Args::parse();
+
     let mut tray_handler = TrayHandler::new(BatteryTray::new());
     let mut device = pair_device();
     tray_handler.update(&device);
 
+    let mut notification_blocked = false;
     // Run loop
     loop {
-        match device.update_battery_state() {
-            Ok(_) => {
+        let (battery_level, _) = match device.update_battery_state() {
+            Ok(t) => {
                 tray_handler.clear_status();
                 tray_handler.update(&device);
+                t
             },
             Err(error) => {
                 handle_error(error, &mut device, &mut tray_handler);
-                thread::sleep(Duration::from_secs(10));
+                thread::sleep(Duration::from_secs(5));
                 continue;
             },
         };
-        thread::sleep(Duration::from_secs(10));
+        if args.enable_notifications && !notification_blocked && battery_level <= args.lower_battery_level {
+            if let Err(error) = Notification::new()
+                .summary("SteelSeries Aerox 5 Wireless")
+                .body(&format!("Battery level low!\n{}% remaining", battery_level))
+                .icon("input-mouse")
+                .appname("Aerox 5")
+                .timeout(args.notification_timeout as i32)
+                .show() {
+                    eprintln!("{error}");
+            } else {
+                notification_blocked = true;
+            }
+        } else if args.enable_notifications && battery_level > args.upper_battery_level {
+            notification_blocked = false;
+        }
+        thread::sleep(Duration::from_secs(5));
     }
 }
