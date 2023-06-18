@@ -1,8 +1,39 @@
 use std::time::Duration;
 use std::thread;
+use clap::Parser;
+use notify_rust::{Notification};
 use aerox_5::{Device, DeviceError};
 mod battery_tray;
 use crate::battery_tray::{TrayHandler, BatteryTray};
+
+
+fn validate_bounds_0_100(value: &str) -> Result<u8, String> {
+    let msg = "The value has to be an integer between 0 and 100.";
+    let value = value.parse().map_err(|_| msg)?;
+    if value > 100 {
+        Err(msg.to_string())
+    } else {
+        Ok(value)
+    }
+}
+
+/// A tray application to monitor SteelSeries Aerox 5 Wireless battery level. 
+#[derive(Parser, Debug)]
+#[command(version)]
+struct Args {
+    /// Enable low-battery desktop notifications.
+    #[arg(long, default_value_t = false)]
+    enable_notifications: bool,
+    /// Set how long the notification will stay on the screen; the notification won't disappear automatically if set to 0.
+    #[arg(long, default_value_t = 5)]
+    notification_timeout: i32,
+    /// Set the battery level below which the notification will be sent.
+    #[arg(long, default_value_t = 10, value_parser = validate_bounds_0_100)]
+    lower_battery_level: u8,
+    /// Set the battery level above which notifications are reenabled.
+    #[arg(long, default_value_t = 10, value_parser = validate_bounds_0_100)]
+    upper_battery_level: u8,
+}
 
 fn pair_device() -> Device {
     loop {
