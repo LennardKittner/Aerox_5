@@ -6,8 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+thistermination = "1.1.0"
 hidapi = "2.3.3"
-thiserror = "1.0.40"
 clap = { version = "4.0", features = ["derive"] }
 [target.'cfg(target_os = "linux")'.dependencies]
 ksni = "0.2.0"

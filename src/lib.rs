@@ -1,5 +1,5 @@
 use hidapi::{HidApi, HidDevice, HidError};
-use thiserror::Error;
+use thistermination::TerminationFull;
 
 // SteelSeries vendorID
 const VENDOR_IDS: [u16; 1] = [0x1038];
@@ -27,17 +27,17 @@ fn get_battery_state(byte: u8) -> (u8, bool) {
     (((byte & !charging_flag) - 1) * 5, byte & charging_flag != 0)
 }
 
-#[derive(Error, Debug)]
+#[derive(TerminationFull)]
 pub enum DeviceError {
-    #[error("{0}")]
+    #[termination(exit_code(1), msg("{0}"))]
     HidError(#[from] HidError),
-    #[error("No device found.")]
+    #[termination(exit_code(2), msg("No device found."))]
     NoDeviceFound(),
-    #[error("Is the mouse turned on?")]
+    #[termination(exit_code(3), msg("Is the mouse turned on?"))]
     MouseOff(),
-    #[error("No response.")]
+    #[termination(exit_code(4), msg("No response."))]
     NoResponse(),
-    #[error("Unknown response: {0:?} with length: {1}")]
+    #[termination(exit_code(5), msg("Unknown response: {0:?} with length: {1}"))]
     UnknownResponse([u8; 8], usize),
 }
    
