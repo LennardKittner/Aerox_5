@@ -88,7 +88,7 @@ impl Tray for BatteryTray {
         };
         ToolTip {
             title: "SteelSeries Aerox 5 Wireless".to_string(),
-            description: description,
+            description,
             icon_name: "".into(),
             icon_pixmap: Vec::new(),
         }

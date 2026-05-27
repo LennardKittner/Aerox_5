@@ -100,7 +100,7 @@ fn main() {
                 .body(&format!("Battery level low!\n{}% remaining", battery_level))
                 .icon("input-mouse")
                 .appname("Aerox 5")
-                .timeout(args.notification_timeout as i32)
+                .timeout(args.notification_timeout)
                 .show() {
                     eprintln!("{error}");
             } else {
