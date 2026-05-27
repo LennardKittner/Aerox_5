@@ -1,0 +1,79 @@
+name: Publish release
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - name: Install Dependencies
+        run: sudo apt update && sudo apt install -y libdbus-1-dev libhidapi-dev libusb-1.0-0-dev libudev-dev
+      - name: Build release binaries
+        run: |
+          cargo build --release
+      - name: Create zip
+        run: |
+          mkdir -p dist
+          cp target/release/aerox_5 dist/
+          cd dist && zip aerox_5_Linux.zip aerox_5
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aerox_5_Linux
+          path: dist/aerox_5_Linux.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+        with: 
+          submodules: recursive
+      - name: Build release binaries
+        run: |
+          cargo build --release
+      - name: Create zip
+        run: |
+          mkdir -p dist
+          cp target/release/aerox_5 dist/
+          cd dist && zip aerox_5_MacOS.zip aerox_5
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: aerox_5_MacOS 
+          path: dist/aerox_5_MacOS.zip
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-macos]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Linux zip artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aerox_5_Linux
+          path: dist/
+
+      - name: Download MacOS zip artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: aerox_5_MacOS
+          path: dist/
+
+      - name: Create GitHub Release and upload zip
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          files: |
+            dist/aerox_5_Linux.zip
+            dist/aerox_5_MacOS.zip
