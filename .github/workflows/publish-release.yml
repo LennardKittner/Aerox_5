@@ -24,7 +24,8 @@ jobs:
         run: |
           mkdir -p dist
           cp target/release/aerox_5 dist/
-          cd dist && zip aerox_5_Linux.zip aerox_5
+          cp target/release/cli_app dist/
+          cd dist && zip aerox_5_Linux.zip aerox_5 cli_app
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
@@ -39,12 +40,12 @@ jobs:
           submodules: recursive
       - name: Build release binaries
         run: |
-          cargo build --release
+          cargo build --release --bin cli_app
       - name: Create zip
         run: |
           mkdir -p dist
-          cp target/release/aerox_5 dist/
-          cd dist && zip aerox_5_MacOS.zip aerox_5
+          cp target/release/cli_app dist/
+          cd dist && zip aerox_5_MacOS.zip cli_app 
       - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with: 
