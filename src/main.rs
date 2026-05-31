@@ -1,11 +1,10 @@
-use std::time::Duration;
-use std::thread;
-use clap::Parser;
-use notify_rust::{Notification};
 use aerox_5::{Device, DeviceError};
+use clap::Parser;
+use notify_rust::Notification;
+use std::thread;
+use std::time::Duration;
 mod battery_tray;
-use crate::battery_tray::{TrayHandler, BatteryTray};
-
+use crate::battery_tray::{BatteryTray, TrayHandler};
 
 fn validate_bounds_0_100(value: &str) -> Result<u8, String> {
     let msg = "The value has to be an integer between 0 and 100.";
@@ -17,7 +16,7 @@ fn validate_bounds_0_100(value: &str) -> Result<u8, String> {
     }
 }
 
-/// A tray application to monitor SteelSeries Aerox 5 Wireless battery level. 
+/// A tray application to monitor SteelSeries Aerox 5 Wireless battery level.
 #[derive(Parser, Debug)]
 #[command(version)]
 struct Args {
@@ -26,7 +25,7 @@ struct Args {
     enable_notifications: bool,
     /// Set how long the notification will stay on the screen; the notification won't disappear automatically if set to 0.
     #[arg(long, default_value_t = 5)]
-    notification_timeout: i32,
+    notification_timeout_in_seconds: i32,
     /// Set the battery level below which the notification will be sent.
     #[arg(long, default_value_t = 10, value_parser = validate_bounds_0_100)]
     lower_battery_level: u8,
@@ -60,7 +59,7 @@ fn handle_error(error: DeviceError, device: &mut Device, tray_handler: &mut Tray
         }
         DeviceError::NoDeviceFound() => {
             eprintln!("{}", DeviceError::NoDeviceFound());
-            tray_handler.set_status( &DeviceError::NoDeviceFound().to_string());
+            tray_handler.set_status(&DeviceError::NoDeviceFound().to_string());
         }
         DeviceError::MouseOff() => {
             eprintln!("{}", DeviceError::MouseOff());
@@ -87,22 +86,28 @@ fn main() {
                 tray_handler.clear_status();
                 tray_handler.update(&device);
                 t
-            },
+            }
             Err(error) => {
                 handle_error(error, &mut device, &mut tray_handler);
                 thread::sleep(Duration::from_secs(5));
                 continue;
-            },
+            }
         };
-        if args.enable_notifications && !notification_blocked && battery_level <= args.lower_battery_level {
+        if args.enable_notifications
+            && !notification_blocked
+            && battery_level <= args.lower_battery_level
+        {
             if let Err(error) = Notification::new()
                 .summary("SteelSeries Aerox 5 Wireless")
                 .body(&format!("Battery level low!\n{}% remaining", battery_level))
                 .icon("input-mouse")
                 .appname("Aerox 5")
-                .timeout(args.notification_timeout)
-                .show() {
-                    eprintln!("{error}");
+                .timeout(Duration::from_secs(
+                    args.notification_timeout_in_seconds as u64,
+                ))
+                .show()
+            {
+                eprintln!("{error}");
             } else {
                 notification_blocked = true;
             }
