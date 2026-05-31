@@ -86,7 +86,7 @@ Usage: aerox_5 [OPTIONS]
 Options:
       --enable-notifications
           Enable low-battery desktop notifications
-      --notification-timeout <NOTIFICATION_TIMEOUT>
+      --notification-timeout-in-seconds <NOTIFICATION_TIMEOUT_IN_SECONDS>
           Set how long the notification will stay on the screen; the notification won't disappear automatically if set to 0 [default: 5]
       --lower-battery-level <LOWER_BATTERY_LEVEL>
           Set the battery level below which the notification will be sent [default: 10]
