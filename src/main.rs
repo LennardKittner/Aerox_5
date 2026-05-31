@@ -38,7 +38,7 @@ struct Args {
     enable_notifications: bool,
     /// Set how long the notification will stay on the screen; the notification won't disappear automatically if set to 0.
     #[arg(long, default_value_t = 5)]
-    notification_timeout: i32,
+    notification_timeout_in_seconds: i32,
     /// Set the battery level below which the low-battery notification will be sent. Requires --enable-notifications.
     #[arg(long, default_value_t = 10, value_parser = validate_bounds_0_100)]
     lower_battery_level: u8,
@@ -116,7 +116,7 @@ fn main() {
                 .body(&format!("Battery level low!\n{}% remaining", battery_level))
                 .icon("input-mouse")
                 .appname("Aerox 5")
-                .timeout(args.notification_timeout)
+                .timeout(Duration::from_secs(args.notification_timeout_in_seconds as u64))
                 .show() {
                     eprintln!("{error}");
             } else {
@@ -132,7 +132,7 @@ fn main() {
                     .body(&format!("Battery reached {}% while charging!", battery_level))
                     .icon("input-mouse")
                     .appname("Aerox 5")
-                    .timeout(args.notification_timeout)
+                    .timeout(Duration::from_secs(args.notification_timeout_in_seconds as u64))
                     .show() {
                         eprintln!("{error}");
                 } else {
