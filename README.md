@@ -1,5 +1,5 @@
 # Aerox_5
-A CLI and tray application to monitor SteelSeries Aerox 5 Wireless battery level. 
+A CLI and tray application to monitor SteelSeries Aerox 5 Wireless battery level.
 
 <img src=./screenshots/tray_app.png alt="tray_app">
 <img src=./screenshots/notification.png alt="notification">
@@ -85,13 +85,15 @@ Usage: aerox_5 [OPTIONS]
 
 Options:
       --enable-notifications
-          Enable low-battery desktop notifications
+          Enable low-battery desktop notifications.
       --notification-timeout-in-seconds <NOTIFICATION_TIMEOUT_IN_SECONDS>
-          Set how long the notification will stay on the screen; the notification won't disappear automatically if set to 0 [default: 5]
+          Set how long the notification will stay on the screen; the notification won't disappear automatically if set to 0. [default: 5]
       --lower-battery-level <LOWER_BATTERY_LEVEL>
-          Set the battery level below which the notification will be sent [default: 10]
+          Set the battery level below which the low-battery notification will be sent. Requires --enable-notifications. [default: 10]
       --upper-battery-level <UPPER_BATTERY_LEVEL>
-          Set the battery level above which notifications are reenabled [default: 10]
+          Set the battery level above which the low-battery notification is re-enabled. Requires --enable-notifications. [default: 10]
+      --full-charge-level <FULL_CHARGE_LEVEL>
+          Send a notification when battery reaches this level while charging. Independent of --enable-notifications. If not set, no full-charge notification is sent.
   -h, --help
           Print help
   -V, --version
@@ -99,7 +101,23 @@ Options:
 ```
 `aerox_5` without any arguments will start the tray application. Once it's open, hover over the headset icon in the system tray to view details like the battery level. To exit, right-click on the icon.
 The `--enable-notifications` flag will enable notifications when the mouse battery level drops under a threshold value.
+The `--full-charge-level` flag enables a separate notification sent when the battery reaches the specified level while charging — useful to know when to unplug. It works independently of `--enable-notifications`.
 The other arguments can be used to customize the notification behavior.
+
+Examples:
+```bash
+# Low-battery notification when below 15%, re-enable above 20%
+aerox_5 --enable-notifications --lower-battery-level 15 --upper-battery-level 20
+
+# Notify when fully charged (100%)
+aerox_5 --full-charge-level 100
+
+# Notify when charging reaches 80%
+aerox_5 --full-charge-level 80
+
+# Both low-battery and full-charge notifications
+aerox_5 --enable-notifications --full-charge-level 100
+```
 
 ## TODOs
 - [ ] Menu bar app for MacOS.
