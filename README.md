@@ -78,28 +78,45 @@ You can also download a compiled version from [releases](https://github.com/Lenn
 `cargo build --release` **will fail on MacOS** because cargo will try to build the tray application, but some dependencies are exclusive to Linux.
 
 ## Usage
-`cli_app` without any arguments will print the current battery level and if the device is charging.
+
+`cli_app` without any arguments will print the current battery level and whether the device is charging.
+
+`aerox_5` without any arguments will start the tray application. Hover over the icon in the system tray to see the battery level. Right-click to exit.
+
+### Notifications
+
+The tray application supports two independent notification types:
+
+**Low-battery notifications** — enabled with `--enable-notifications`, fires when the battery drops below a threshold:
 
 ```
-Usage: aerox_5 [OPTIONS]
-
-Options:
-      --enable-notifications
-          Enable low-battery desktop notifications
-      --notification-timeout-in-seconds <NOTIFICATION_TIMEOUT_IN_SECONDS>
-          Set how long the notification will stay on the screen; the notification won't disappear automatically if set to 0 [default: 5]
-      --lower-battery-level <LOWER_BATTERY_LEVEL>
-          Set the battery level below which the notification will be sent [default: 10]
-      --upper-battery-level <UPPER_BATTERY_LEVEL>
-          Set the battery level above which notifications are reenabled [default: 10]
-  -h, --help
-          Print help
-  -V, --version
-          Print version
+--enable-notifications                     Enable low-battery desktop notifications
+--lower-battery-level <LEVEL>              Battery % below which the notification is sent [default: 10]
+--upper-battery-level <LEVEL>              Battery % above which the notification is re-enabled [default: 10]
+--notification-timeout-in-seconds <SECS>   How long the notification stays on screen; 0 = no auto-dismiss [default: 5]
 ```
-`aerox_5` without any arguments will start the tray application. Once it's open, hover over the headset icon in the system tray to view details like the battery level. To exit, right-click on the icon.
-The `--enable-notifications` flag will enable notifications when the mouse battery level drops under a threshold value.
-The other arguments can be used to customize the notification behavior.
+
+**Full-charge notifications** — enabled with `--full-charge-level`, fires when the battery reaches the specified level while charging. Works independently of `--enable-notifications`:
+
+```
+--full-charge-level <LEVEL>   Battery % at which a "charged" notification is sent while charging
+```
+
+### Examples
+
+```bash
+# Low-battery notification when below 15%, re-enable above 20%
+aerox_5 --enable-notifications --lower-battery-level 15 --upper-battery-level 20
+
+# Notify when fully charged (100%)
+aerox_5 --full-charge-level 100
+
+# Notify when charging reaches 80% (useful for battery health)
+aerox_5 --full-charge-level 80
+
+# Both low-battery and full-charge notifications
+aerox_5 --enable-notifications --full-charge-level 100
+```
 
 ## TODOs
 - [ ] Menu bar app for MacOS.
