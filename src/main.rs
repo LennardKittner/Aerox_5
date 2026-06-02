@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::Duration;
 
+use clap::Parser;
 use gtk4::prelude::*;
 use gtk4::Application;
 use notify_rust::Notification;
@@ -16,6 +17,63 @@ mod gui;
 use battery_tray::{BatteryTray, TrayHandler, TrayMessage};
 use config::Config;
 use gui::show_settings_window;
+
+fn validate_bounds_0_100(value: &str) -> Result<u8, String> {
+    let msg = "The value has to be an integer between 0 and 100.";
+    let value: u8 = value.parse().map_err(|_| String::from(msg))?;
+    if value > 100 { Err(msg.to_string()) } else { Ok(value) }
+}
+
+/// Tray application to monitor SteelSeries Aerox 5 Wireless battery level.
+/// CLI flags override the saved config for this session only.
+#[derive(Parser, Debug)]
+#[command(version, after_help = "\
+Examples:
+  # Low-battery notification when below 15%, re-enable above 20%
+  aerox_5 --enable-notifications --lower-battery-level 15 --upper-battery-level 20
+
+  # Notify when fully charged (100%)
+  aerox_5 --full-charge-level 100
+
+  # Both low-battery and full-charge notifications
+  aerox_5 --enable-notifications --full-charge-level 100")]
+struct Args {
+    /// Enable low-battery desktop notifications.
+    #[arg(long)]
+    enable_notifications: bool,
+    /// How long the notification stays on screen (0 = persistent).
+    #[arg(long, value_parser = |s: &str| s.parse::<i32>().map_err(|e| e.to_string()))]
+    notification_timeout_in_seconds: Option<i32>,
+    /// Battery level below which the low-battery notification is sent. Requires --enable-notifications.
+    #[arg(long, value_parser = validate_bounds_0_100)]
+    lower_battery_level: Option<u8>,
+    /// Battery level above which the low-battery notification is re-enabled. Requires --enable-notifications.
+    #[arg(long, value_parser = validate_bounds_0_100)]
+    upper_battery_level: Option<u8>,
+    /// Notify when battery reaches this level while charging. If not set, no full-charge notification is sent.
+    #[arg(long, value_parser = validate_bounds_0_100)]
+    full_charge_level: Option<u8>,
+}
+
+impl Args {
+    fn apply_to(&self, config: &mut Config) {
+        if self.enable_notifications {
+            config.enable_notifications = true;
+        }
+        if let Some(v) = self.notification_timeout_in_seconds {
+            config.notification_timeout_in_seconds = v;
+        }
+        if let Some(v) = self.lower_battery_level {
+            config.lower_battery_level = v;
+        }
+        if let Some(v) = self.upper_battery_level {
+            config.upper_battery_level = v;
+        }
+        if self.full_charge_level.is_some() {
+            config.full_charge_level = self.full_charge_level;
+        }
+    }
+}
 
 fn pair_device() -> Device {
     loop {
@@ -113,8 +171,11 @@ fn battery_loop(config: Arc<Mutex<Config>>, tray: TrayHandler) {
 }
 
 fn main() {
+    let args = Args::parse();
     let is_first_run = !Config::exists();
-    let config = Arc::new(Mutex::new(Config::load_or_default()));
+    let mut base_config = Config::load_or_default();
+    args.apply_to(&mut base_config);
+    let config = Arc::new(Mutex::new(base_config));
 
     let (tx, rx) = mpsc::channel::<TrayMessage>();
 

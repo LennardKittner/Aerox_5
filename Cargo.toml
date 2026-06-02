@@ -18,3 +18,4 @@ ksni = "0.2.0"
 notify-rust = "4.8.0"
 gtk4 = "0.9"
 glib = "0.20"
+clap = { version = "4", features = ["derive"] }
