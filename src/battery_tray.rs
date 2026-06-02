@@ -1,46 +1,35 @@
+use std::sync::mpsc::Sender;
 use aerox_5::Device;
-use ksni::{Tray, MenuItem, menu::{StandardItem}, ToolTip, TrayService, Handle};
+use ksni::{menu::StandardItem, Handle, MenuItem, Tray, TrayService, ToolTip};
 
-pub struct TrayHandler {
-    handle: Handle<BatteryTray>,
+pub enum TrayMessage {
+    ShowSettings,
 }
 
-impl TrayHandler {
-    pub fn new(tray: BatteryTray) -> Self {
-        let tray_service = TrayService::new(tray);
-        let handle = tray_service.handle();
-        tray_service.spawn();
-        TrayHandler {
-            handle,
-        }
-    }
-
-    pub fn update(&self, device: &Device) {
-        self.handle.update(|tray: &mut BatteryTray| { tray.update(device); })
-    }
-
-    pub fn set_status(&mut self, message: &str) {
-        self.handle.update(|tray: &mut BatteryTray| { tray.set_status(message); })
-    }
-
-    pub fn clear_status(&mut self) {
-        self.handle.update(|tray: &mut BatteryTray| { tray.clear_status(); })
-    }
-}
-
-#[derive(Debug)]
 pub struct BatteryTray {
     battery_level: u8,
     charging: bool,
     status_message: Option<String>,
+    tx: Sender<TrayMessage>,
+}
+
+impl std::fmt::Debug for BatteryTray {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BatteryTray")
+            .field("battery_level", &self.battery_level)
+            .field("charging", &self.charging)
+            .field("status_message", &self.status_message)
+            .finish()
+    }
 }
 
 impl BatteryTray {
-    pub fn new() -> Self {
+    pub fn new(tx: Sender<TrayMessage>) -> Self {
         BatteryTray {
             battery_level: 0,
             charging: false,
             status_message: Some("No device found".to_string()),
+            tx,
         }
     }
 
@@ -62,8 +51,19 @@ impl Tray for BatteryTray {
     fn icon_name(&self) -> String {
         "input-mouse".into()
     }
+
     fn menu(&self) -> Vec<MenuItem<Self>> {
+        let tx = self.tx.clone();
         vec![
+            StandardItem {
+                label: "Settings".into(),
+                icon_name: "preferences-system".into(),
+                activate: Box::new(move |_| {
+                    let _ = tx.send(TrayMessage::ShowSettings);
+                }),
+                ..Default::default()
+            }
+            .into(),
             StandardItem {
                 label: "Exit".into(),
                 icon_name: "application-exit".into(),
@@ -73,18 +73,15 @@ impl Tray for BatteryTray {
             .into(),
         ]
     }
+
     fn tool_tip(&self) -> ToolTip {
         let description = match &self.status_message {
             Some(m) => m.clone(),
             None => {
-                let mut description = format!("Battery level: {}%", self.battery_level);
-                if self.charging {
-                    description += "\nCharging";
-                } else {
-                    description += "\nNot charging";
-                }
-                description
-            },
+                let mut s = format!("Battery level: {}%", self.battery_level);
+                if self.charging { s += "\nCharging"; } else { s += "\nNot charging"; }
+                s
+            }
         };
         ToolTip {
             title: "SteelSeries Aerox 5 Wireless".to_string(),
@@ -92,5 +89,37 @@ impl Tray for BatteryTray {
             icon_name: "".into(),
             icon_pixmap: Vec::new(),
         }
+    }
+}
+
+pub struct TrayHandler {
+    handle: Handle<BatteryTray>,
+}
+
+impl Clone for TrayHandler {
+    fn clone(&self) -> Self {
+        TrayHandler { handle: self.handle.clone() }
+    }
+}
+
+impl TrayHandler {
+    pub fn new(tray: BatteryTray) -> Self {
+        let service = TrayService::new(tray);
+        let handle = service.handle();
+        service.spawn();
+        TrayHandler { handle }
+    }
+
+    pub fn update(&self, device: &Device) {
+        self.handle.update(|tray: &mut BatteryTray| tray.update(device));
+    }
+
+    pub fn set_status(&self, message: &str) {
+        let msg = message.to_string();
+        self.handle.update(move |tray: &mut BatteryTray| tray.set_status(&msg));
+    }
+
+    pub fn clear_status(&self) {
+        self.handle.update(|tray: &mut BatteryTray| tray.clear_status());
     }
 }
