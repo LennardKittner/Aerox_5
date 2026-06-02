@@ -147,6 +147,7 @@ fn battery_loop(config: Arc<Mutex<Config>>, tray: TrayHandler) {
             notification_blocked = false;
         }
 
+
         if let Some(full_charge_level) = cfg.full_charge_level {
             if charging && battery_level >= full_charge_level && !fully_charged_notified {
                 if let Err(e) = Notification::new()
