@@ -1,6 +1,6 @@
 use gtk4::prelude::*;
 use gtk4::{
-    Align, Application, ApplicationWindow, Box as GtkBox, Button, CheckButton,
+    Align, Application, ApplicationWindow, Box as GtkBox, Button,
     Grid, Label, Orientation, Separator, SpinButton, Switch,
 };
 use std::sync::{Arc, Mutex};
@@ -43,6 +43,7 @@ pub fn show_settings_window(app: &Application, config: Arc<Mutex<Config>>, is_fi
     notif_label.set_hexpand(true);
     let notif_switch = Switch::new();
     notif_switch.set_valign(Align::Center);
+    notif_switch.set_halign(Align::End);
     grid.attach(&notif_label, 0, 0, 1, 1);
     grid.attach(&notif_switch, 1, 0, 1, 1);
 
@@ -64,39 +65,42 @@ pub fn show_settings_window(app: &Application, config: Arc<Mutex<Config>>, is_fi
     grid.attach(&upper_label, 0, 3, 1, 1);
     grid.attach(&upper_spin, 1, 3, 1, 1);
 
+    let full_label = Label::new(Some("Notify when charging reaches (%)"));
+    full_label.set_halign(Align::Start);
+    let full_switch = Switch::new();
+    full_switch.set_valign(Align::Center);
+    full_switch.set_halign(Align::End);
+    grid.attach(&full_label, 0, 4, 1, 1);
+    grid.attach(&full_switch, 1, 4, 1, 1);
+
+    let full_target_label = Label::new(Some("Target level (%)"));
+    full_target_label.set_halign(Align::Start);
+    let full_spin = SpinButton::with_range(1.0, 100.0, 1.0);
+    grid.attach(&full_target_label, 0, 5, 1, 1);
+    grid.attach(&full_spin, 1, 5, 1, 1);
+
     {
         let cfg = config.lock().unwrap();
         notif_switch.set_active(cfg.enable_notifications);
         timeout_spin.set_value(cfg.notification_timeout_in_seconds as f64);
         lower_spin.set_value(cfg.lower_battery_level as f64);
         upper_spin.set_value(cfg.upper_battery_level as f64);
-    }
-
-    vbox.append(&grid);
-    vbox.append(&Separator::new(Orientation::Horizontal));
-
-    let full_hbox = GtkBox::new(Orientation::Horizontal, 12);
-    let full_check = CheckButton::with_label("Notify when charging reaches (%)");
-    let full_spin = SpinButton::with_range(1.0, 100.0, 1.0);
-    {
-        let cfg = config.lock().unwrap();
         if let Some(level) = cfg.full_charge_level {
-            full_check.set_active(true);
+            full_switch.set_active(true);
             full_spin.set_value(level as f64);
         } else {
-            full_check.set_active(false);
+            full_switch.set_active(false);
             full_spin.set_value(100.0);
             full_spin.set_sensitive(false);
         }
     }
-    full_check.connect_toggled(glib::clone!(
-        #[weak] full_spin,
-        move |btn| { full_spin.set_sensitive(btn.is_active()); }
-    ));
-    full_hbox.append(&full_check);
-    full_hbox.append(&full_spin);
-    vbox.append(&full_hbox);
 
+    full_switch.connect_active_notify(glib::clone!(
+        #[weak] full_spin,
+        move |sw| { full_spin.set_sensitive(sw.is_active()); }
+    ));
+
+    vbox.append(&grid);
     vbox.append(&Separator::new(Orientation::Horizontal));
 
     let autostart_hbox = GtkBox::new(Orientation::Horizontal, 12);
@@ -135,7 +139,7 @@ pub fn show_settings_window(app: &Application, config: Arc<Mutex<Config>>, is_fi
         #[weak] timeout_spin,
         #[weak] lower_spin,
         #[weak] upper_spin,
-        #[weak] full_check,
+        #[weak] full_switch,
         #[weak] full_spin,
         #[weak] autostart_switch,
         move |_| {
@@ -144,7 +148,7 @@ pub fn show_settings_window(app: &Application, config: Arc<Mutex<Config>>, is_fi
                 notification_timeout_in_seconds: timeout_spin.value() as i32,
                 lower_battery_level: lower_spin.value() as u8,
                 upper_battery_level: upper_spin.value() as u8,
-                full_charge_level: if full_check.is_active() {
+                full_charge_level: if full_switch.is_active() {
                     Some(full_spin.value() as u8)
                 } else {
                     None
