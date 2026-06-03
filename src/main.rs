@@ -181,7 +181,7 @@ fn main() {
     let (tx, rx) = mpsc::channel::<TrayMessage>();
 
     let app = Application::builder()
-        .application_id("io.github.drakmanga.aerox5")
+        .application_id("io.github.LennardKittner.Aerox_5")
         .build();
 
     let config_activate = config.clone();

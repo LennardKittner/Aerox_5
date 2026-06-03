@@ -1,6 +1,7 @@
 use std::sync::mpsc::Sender;
 use aerox_5::Device;
-use ksni::{menu::StandardItem, Handle, MenuItem, Tray, TrayService, ToolTip};
+use ksni::{menu::StandardItem, MenuItem, Tray, ToolTip};
+use ksni::blocking::{Handle, TrayMethods};
 
 pub enum TrayMessage {
     ShowSettings,
@@ -48,6 +49,10 @@ impl BatteryTray {
 }
 
 impl Tray for BatteryTray {
+    fn id(&self) -> String {
+        "aerox_5".into()
+    }
+
     fn icon_name(&self) -> String {
         "input-mouse".into()
     }
@@ -104,9 +109,7 @@ impl Clone for TrayHandler {
 
 impl TrayHandler {
     pub fn new(tray: BatteryTray) -> Self {
-        let service = TrayService::new(tray);
-        let handle = service.handle();
-        service.spawn();
+        let handle = tray.spawn().expect("failed to start tray service");
         TrayHandler { handle }
     }
 
