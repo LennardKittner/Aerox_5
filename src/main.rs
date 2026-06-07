@@ -87,21 +87,21 @@ fn pair_device() -> Device {
 
 fn handle_error(error: DeviceError, device: &mut Device, tray: &TrayHandler) {
     match error {
-        DeviceError::HidError(hidapi::HidError::HidApiError { message }) => {
-            if message == "No such device" {
-                eprintln!("No device found.");
-                tray.set_status("No device found.");
-                *device = pair_device();
-                if let Ok(_) = device.update_battery_state() {
-                    tray.clear_status_and_update(device);
-                }
-            } else {
-                eprintln!("{message}");
+        DeviceError::HidError(e) => {
+            eprintln!("HID error: {e}");
+            tray.set_status("No device found.");
+            *device = pair_device();
+            if let Ok(_) = device.update_battery_state() {
+                tray.clear_status_and_update(device);
             }
         }
         DeviceError::NoDeviceFound() => {
             eprintln!("{}", DeviceError::NoDeviceFound());
-            tray.set_status(&DeviceError::NoDeviceFound().to_string());
+            tray.set_status("No device found.");
+            *device = pair_device();
+            if let Ok(_) = device.update_battery_state() {
+                tray.clear_status_and_update(device);
+            }
         }
         DeviceError::MouseOff() => {
             eprintln!("{}", DeviceError::MouseOff());
