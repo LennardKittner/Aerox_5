@@ -20,7 +20,10 @@ const BATTERY_PACKET: [u8; 2] = {
 };
 fn get_battery_state(byte: u8) -> (u8, bool) {
     let charging_flag: u8 = 0b10000000;
-    (((byte & !charging_flag) - 1) * 5, byte & charging_flag != 0)
+    let charging = byte & charging_flag != 0;
+    let raw = byte & !charging_flag;
+    let level = if raw > 0 { (raw - 1) * 5 } else { 0 };
+    (level, charging)
 }
 #[derive(TerminationFull)]
 pub enum DeviceError {

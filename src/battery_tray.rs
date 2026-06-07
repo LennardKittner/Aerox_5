@@ -34,17 +34,8 @@ impl BatteryTray {
         }
     }
 
-    pub fn update(&mut self, device: &Device) {
-        self.battery_level = device.battery_level;
-        self.charging = device.charging;
-    }
-
     pub fn set_status(&mut self, message: &str) {
         self.status_message = Some(message.to_string());
-    }
-
-    pub fn clear_status(&mut self) {
-        self.status_message = None;
     }
 }
 
@@ -114,15 +105,26 @@ impl TrayHandler {
     }
 
     pub fn update(&self, device: &Device) {
-        self.handle.update(|tray: &mut BatteryTray| tray.update(device));
+        let level = device.battery_level;
+        let charging = device.charging;
+        self.handle.update(move |tray: &mut BatteryTray| {
+            tray.battery_level = level;
+            tray.charging = charging;
+        });
+    }
+
+    pub fn clear_status_and_update(&self, device: &Device) {
+        let level = device.battery_level;
+        let charging = device.charging;
+        self.handle.update(move |tray: &mut BatteryTray| {
+            tray.status_message = None;
+            tray.battery_level = level;
+            tray.charging = charging;
+        });
     }
 
     pub fn set_status(&self, message: &str) {
         let msg = message.to_string();
         self.handle.update(move |tray: &mut BatteryTray| tray.set_status(&msg));
-    }
-
-    pub fn clear_status(&self) {
-        self.handle.update(|tray: &mut BatteryTray| tray.clear_status());
     }
 }

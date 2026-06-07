@@ -92,6 +92,9 @@ fn handle_error(error: DeviceError, device: &mut Device, tray: &TrayHandler) {
                 eprintln!("No device found.");
                 tray.set_status("No device found.");
                 *device = pair_device();
+                if let Ok(_) = device.update_battery_state() {
+                    tray.clear_status_and_update(device);
+                }
             } else {
                 eprintln!("{message}");
             }
@@ -117,8 +120,7 @@ fn battery_loop(config: Arc<Mutex<Config>>, tray: TrayHandler) {
     loop {
         let (battery_level, charging) = match device.update_battery_state() {
             Ok(t) => {
-                tray.clear_status();
-                tray.update(&device);
+                tray.clear_status_and_update(&device);
                 t
             }
             Err(error) => {
