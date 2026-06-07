@@ -223,5 +223,5 @@ fn main() {
         }
     });
 
-    app.run();
+    app.run_with_args(&[] as &[&str]);
 }
