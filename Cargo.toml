@@ -13,9 +13,10 @@ serde = { version = "1", features = ["derive"] }
 toml = "0.8"
 dirs = "5"
 
+clap = { version = "4", features = ["derive"] }
+
 [target.'cfg(target_os = "linux")'.dependencies]
 ksni = { version = "0.3", features = ["blocking"] }
 notify-rust = "4.17.0"
 gtk4 = "0.11"
 glib = "0.22"
-clap = { version = "4", features = ["derive"] }
