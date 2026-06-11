@@ -2,13 +2,21 @@
 name = "aerox_5"
 version = "1.0.3"
 edition = "2021"
+default-run = "aerox_5"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 thistermination = "1.1.0"
-hidapi = "2.3.3"
-clap = { version = "4.0", features = ["derive"] }
+hidapi = "2.6.6"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+dirs = "5"
+
+clap = { version = "4", features = ["derive"] }
+
 [target.'cfg(target_os = "linux")'.dependencies]
-ksni = "0.2.0"
-notify-rust = "4.8.0"
+ksni = { version = "0.3", features = ["blocking"] }
+notify-rust = "4.17.0"
+gtk4 = "0.11"
+glib = "0.22"
