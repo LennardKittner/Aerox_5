@@ -53,6 +53,9 @@ struct Args {
     /// Notify when battery reaches this level while charging. If not set, no full-charge notification is sent.
     #[arg(long, value_parser = validate_bounds_0_100)]
     full_charge_level: Option<u8>,
+    /// Open the settings window on startup.
+    #[arg(long)]
+    show_settings: bool,
 }
 
 impl Args {
@@ -91,17 +94,11 @@ fn handle_error(error: DeviceError, device: &mut Device, tray: &TrayHandler) {
             eprintln!("HID error: {e}");
             tray.set_status("No device found.");
             *device = pair_device();
-            if let Ok(_) = device.update_battery_state() {
-                tray.clear_status_and_update(device);
-            }
         }
         DeviceError::NoDeviceFound() => {
             eprintln!("{}", DeviceError::NoDeviceFound());
             tray.set_status("No device found.");
             *device = pair_device();
-            if let Ok(_) = device.update_battery_state() {
-                tray.clear_status_and_update(device);
-            }
         }
         DeviceError::MouseOff() => {
             eprintln!("{}", DeviceError::MouseOff());
@@ -176,6 +173,7 @@ fn battery_loop(config: Arc<Mutex<Config>>, tray: TrayHandler) {
 fn main() {
     let args = Args::parse();
     let is_first_run = !Config::exists();
+    let show_settings = args.show_settings;
     let mut base_config = Config::load_or_default();
     args.apply_to(&mut base_config);
     let config = Arc::new(Mutex::new(base_config));
@@ -217,8 +215,8 @@ fn main() {
             let config_bt = config_activate.clone();
             thread::spawn(move || battery_loop(config_bt, handler_bt));
 
-            if is_first_run {
-                show_settings_window(app, config_activate.clone(), true);
+            if is_first_run || show_settings {
+                show_settings_window(app, config_activate.clone(), is_first_run);
             }
         }
     });
