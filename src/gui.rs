@@ -104,13 +104,19 @@ pub fn show_settings_window(app: &Application, config: Arc<Mutex<Config>>, is_fi
     vbox.append(&Separator::new(Orientation::Horizontal));
 
     let autostart_hbox = GtkBox::new(Orientation::Horizontal, 12);
-    let autostart_label = Label::new(Some("Start automatically on login"));
+    let autostart_vbox = GtkBox::new(Orientation::Vertical, 2);
+    let autostart_label = Label::new(Some("Enable XDG autostart"));
     autostart_label.set_halign(Align::Start);
-    autostart_label.set_hexpand(true);
+    let autostart_sublabel = Label::new(Some("Start automatically on login (requires XDG autostart support, e.g. GNOME, KDE — not Hyprland)"));
+    autostart_sublabel.set_halign(Align::Start);
+    autostart_sublabel.add_css_class("dim-label");
+    autostart_vbox.append(&autostart_label);
+    autostart_vbox.append(&autostart_sublabel);
+    autostart_vbox.set_hexpand(true);
     let autostart_switch = Switch::new();
     autostart_switch.set_valign(Align::Center);
     autostart_switch.set_active(is_autostart_enabled());
-    autostart_hbox.append(&autostart_label);
+    autostart_hbox.append(&autostart_vbox);
     autostart_hbox.append(&autostart_switch);
     vbox.append(&autostart_hbox);
 
