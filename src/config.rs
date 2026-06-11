@@ -80,10 +80,8 @@ pub fn set_autostart(enabled: bool) -> Result<(), Box<dyn std::error::Error>> {
             std::fs::create_dir_all(parent)?;
         }
         let exe = std::env::current_exe()?;
-        let content = format!(
-            "[Desktop Entry]\nType=Application\nName=Aerox 5\nExec={}\nIcon=input-mouse\nComment=SteelSeries Aerox 5 Wireless battery monitor\nX-GNOME-Autostart-enabled=true\n",
-            exe.display()
-        );
+        let content = include_str!("../assets/autostart.desktop.template")
+            .replace("{exe}", &exe.display().to_string());
         std::fs::write(path, content)?;
     } else if path.exists() {
         std::fs::remove_file(path)?;
