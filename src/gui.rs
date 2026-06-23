@@ -107,7 +107,7 @@ pub fn show_settings_window(app: &Application, config: Arc<Mutex<Config>>, is_fi
     let autostart_vbox = GtkBox::new(Orientation::Vertical, 2);
     let autostart_label = Label::new(Some("Enable XDG autostart"));
     autostart_label.set_halign(Align::Start);
-    let autostart_sublabel = Label::new(Some("Start automatically on login (requires XDG autostart support, e.g. GNOME, KDE — not Hyprland)"));
+    let autostart_sublabel = Label::new(Some("Start automatically on login (requires XDG autostart support, e.g. GNOME, KDE)"));
     autostart_sublabel.set_halign(Align::Start);
     autostart_sublabel.add_css_class("dim-label");
     autostart_vbox.append(&autostart_label);
