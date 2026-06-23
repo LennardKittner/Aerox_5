@@ -1,6 +1,6 @@
 [package]
 name = "aerox_5"
-version = "1.0.3"
+version = "1.1.0"
 edition = "2021"
 default-run = "aerox_5"
 
