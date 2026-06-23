@@ -3,6 +3,8 @@ A CLI and tray application to monitor SteelSeries Aerox 5 Wireless battery level
 
 <img src=./screenshots/tray_app.png alt="tray_app">
 <img src=./screenshots/notification.png alt="notification">
+<img width="702" height="430" alt="Schermata_20260611_173233" src="https://github.com/user-attachments/assets/546cecaa-011c-4d19-8a8e-a5cb7f41f438" />
+
 
 ## Compatibility
 The CLI application is compatible with both Linux and MacOS operating systems. However, the tray application is only functional on Linux. Although it was only tested on Manjaro/KDE, it should also work on other distribution and desktop environments.

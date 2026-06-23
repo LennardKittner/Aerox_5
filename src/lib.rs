@@ -20,7 +20,10 @@ const BATTERY_PACKET: [u8; 2] = {
 };
 fn get_battery_state(byte: u8) -> (u8, bool) {
     let charging_flag: u8 = 0b10000000;
-    (((byte & !charging_flag) - 1) * 5, byte & charging_flag != 0)
+    let charging = byte & charging_flag != 0;
+    let raw = byte & !charging_flag;
+    let level = if raw > 0 { (raw - 1) * 5 } else { 0 };
+    (level, charging)
 }
 #[derive(TerminationFull)]
 pub enum DeviceError {
@@ -77,15 +80,32 @@ impl Device {
         Err(last_error.unwrap_or(DeviceError::NoDeviceFound()))
     }
     fn query_one(hid_device: &HidDevice) -> Result<(u8, bool), DeviceError> {
+        // Drain stale buffered reports before issuing the query
+        let mut drain = [0u8; 8];
+        while hid_device.read_timeout(&mut drain, 0).unwrap_or(0) > 0 {}
+
         hid_device.write(&BATTERY_PACKET)?;
         let mut buf = [0u8; 8];
-        let res = hid_device.read_timeout(&mut buf[..], 1000)?;
-        if res > RESPONSE_LENGTH && buf.starts_with(&BATTERY_LEVEL_PREAMBLE) {
-            Ok(get_battery_state(buf[BATTERY_LEVEL_INDEX]))
-        } else if res > RESPONSE_LENGTH && buf.starts_with(&MOUSE_OFF) {
-            Err(DeviceError::MouseOff())
-        } else {
-            Err(DeviceError::UnknownResponse(buf, res))
+        // Loop until we find the battery response, skipping unrelated reports
+        let deadline = std::time::Instant::now() + std::time::Duration::from_millis(2000);
+        loop {
+            let remaining_ms = deadline
+                .saturating_duration_since(std::time::Instant::now())
+                .as_millis()
+                .min(1000) as i32;
+            if remaining_ms == 0 {
+                break;
+            }
+            let res = hid_device.read_timeout(&mut buf[..], remaining_ms)?;
+            if res == 0 {
+                break;
+            }
+            if res > RESPONSE_LENGTH && buf.starts_with(&BATTERY_LEVEL_PREAMBLE) {
+                return Ok(get_battery_state(buf[BATTERY_LEVEL_INDEX]));
+            } else if res > RESPONSE_LENGTH && buf.starts_with(&MOUSE_OFF) {
+                return Err(DeviceError::MouseOff());
+            }
         }
+        Err(DeviceError::UnknownResponse(buf, 0))
     }
 }

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Aerox 5
+Exec={exe}
+Icon=input-mouse
+Comment=SteelSeries Aerox 5 Wireless battery monitor
+X-GNOME-Autostart-enabled=true
